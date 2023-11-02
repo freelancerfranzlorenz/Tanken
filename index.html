@@ -1,0 +1,332 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+  <!-- Required meta tags--> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#00808020"> 
+  <title>Tank-App</title> 
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
+  <link rel="stylesheet" href="./framework7-bundle.min.css">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./tanken.css">
+  <script src="ServerQuery.js"></script>
+  <script>
+
+    /* global application data */
+    var gAppData = { "plz":"", "sprit":"", "radius":"", "ok":false };
+    var gAppPresets = [];
+
+    function appInit()
+    {
+      loadAppData();
+      loadPresets();
+      //
+      if( gAppData["ok"] )              //all data available?
+        pageSet( 0 );                   // go to view
+      else                              //otherwise
+        pageSet( 1 );                   // go directly to settings!
+    }    
+
+    function loadAppData()
+    {
+      let nOk = 3;
+      let sData = localStorage.getItem( "plz" );
+      if( sData != null ) { gAppData["plz"] = sData; nOk--; }
+      sData = localStorage.getItem( "sprit" );
+      if( sData != null ) { gAppData["sprit"] = sData; nOk--; }
+      sData = localStorage.getItem( "radius" );
+      if( sData != null ) { gAppData["radius"] = sData; nOk--; }
+      gAppData["ok"] = ( nOk == 0 );
+    }
+
+    function loadPresets()
+    {
+      sData = localStorage.getItem( "presets" );
+      if( sData != null )
+      {
+        try 
+        { gAppPresets = JSON.parse( sData );  }
+        catch( e ) 
+        { 
+          gAppPresets.push( { "plz":"93309", "sprit":"supere5", "radius":"25" } );
+          gAppPresets.push( { "plz":"94315", "sprit":"diesel", "radius":"5" } );
+        }
+      }
+      else
+      {
+        gAppPresets.push( { "plz":"93309", "sprit":"supere5", "radius":"25" } );
+        gAppPresets.push( { "plz":"94315", "sprit":"diesel", "radius":"5" } );
+      }
+    }
+
+    function storeAppData()
+    {
+      Object.keys( gAppData ).forEach( (sKey) => 
+      { localStorage.setItem( sKey, gAppData[sKey] ); } );
+    }
+
+    function storePresets()
+    { localStorage.setItem( "presets", JSON.stringify( gAppPresets ) ); }
+
+    function pageSet( nPage )
+    { if( 0 == nPage ) { pagepricestationQuery();  }
+      if( 1 == nPage ) { pagesettingsUpdate(); pagesettingsList(); }
+      let aPages = document.getElementsByClassName( "page-content" );
+      for( let nIdx=0; nIdx<aPages.length; nIdx++ )
+        aPages[nIdx].hidden = ( nPage != nIdx );
+      let Title = document.getElementsByClassName( "title" )[0];
+      let aTitle = Title.innerHTML.split( "&nbsp;" );
+      if( gAppData["ok"] )
+      { let sSprit = gAppData["sprit"];
+        sSprit = sSprit.replace("dies","Dies");
+        sSprit = sSprit.replace("supere","SuperE");
+        aTitle[1] = "<a href='#' onclick='pageSet(1);'>"+gAppData["plz"]+"/"+sSprit+"/"+gAppData["radius"]+"</a>";
+      }
+      else
+        aTitle[1] = "";
+      Title.innerHTML = aTitle.join( "&nbsp;" );
+    }
+
+    var objStations = [];
+    var StationSrv = null;
+    var StationRdy = false;
+
+    function pagepricestationQuery()
+    {
+      if( gAppData["ok"] == true )
+      {
+        stationClearAll();
+        StationRdy = false;
+        StationSrv = new ServerQuery();
+        StationSrv.get( gAppData["plz"], gAppData["sprit"], gAppData["radius"], stationReceive );
+      }
+    }
+
+    function stationReceive( sText )
+    {
+      var Rcv = StationSrv.decode( sText );
+      if( Object.keys( Rcv ).length > 0 )
+        objStations = Rcv;
+      StationRdy = true;
+      pagepricestationUpdate();
+    }
+    
+    function pagepricestationUpdate()
+    {
+      if( Object.keys( objStations ).length > 0 )
+      {
+        objStations["result"].forEach( stationAdd );
+      }
+      else
+      {
+        pagepricestationQuery();
+      }
+    }
+
+    function stationClearAll()
+    {
+      let Stationlist = document.getElementById( "stationstimeline" );
+      Stationlist.innerHTML = "";
+    }
+
+    function stationAdd( aStation )
+    {
+      let Stationlist = document.getElementById( "stationstimeline" );
+      let Template = document.getElementById( "stationstimelinetemplate" ).cloneNode( true );
+      let aStats = [];
+      Template.getElementsByClassName("station_price")[0].innerHTML = aStation["sPreis"];
+      Template.getElementsByClassName("station_name")[0].innerHTML = aStation["sName"];
+      Template.getElementsByClassName("station_addr")[0].innerHTML = aStation["sStrasse"]+"<br/>"+aStation["sOrt"];
+      Stationlist.appendChild( Template.cloneNode( true ) );
+    }
+    
+    function pagesettingsUpdate()
+    {
+      document.getElementById( "inputplz" ).value = gAppData["plz"];
+      document.getElementById( "inputsprit" ).value = gAppData["sprit"];
+      document.getElementById( "inputradius" ).value = gAppData["radius"];
+    }
+    
+    function pagesettingsDataUpdate()
+    {
+      let Data = document.getElementById( "inputplz" ).value;
+      gAppData["plz"] = Data;
+      Data = document.getElementById( "inputsprit" ).value;
+      gAppData["sprit"] = Data;
+      Data = document.getElementById( "inputradius" ).value;
+      gAppData["radius"] = Data;
+      gAppData["ok"] = true;
+      let bPresetFound = false;
+      gAppPresets.forEach( (Preset) =>
+        {
+          if( ( Preset.plz == gAppData["plz"] ) &&
+              ( Preset.sprit == gAppData["sprit"] ) )
+          { bPresetFound = true; }
+        }
+      );  //forEach()
+      if( ! bPresetFound )
+      {
+        gAppPresets.push( { "plz":gAppData["plz"], "sprit":gAppData["sprit"], "radius":gAppData["radius"] } );
+        storePresets();
+      }
+      storeAppData();
+      pageSet( 0 );
+      // only for test pagesettingsList();
+    }
+    
+    function pagesettingsList()
+    {
+      let Ele = document.getElementById( "pagesettingsList" );
+      let sHtml = "<ul>\n";
+      if( null != Ele )
+      {
+        gAppPresets.forEach( (Preset) =>
+          {
+            sHtml += "<li class='preset_item'>\n";
+            sHtml += "<button class='button button-outline' ";
+            sHtml += "onclick='pagesettingsSetPreset( this );' ";
+            sHtml += "plz='"+Preset.plz+"' sprit='"+Preset.sprit+"' radius='"+Preset.radius+"'";
+            sHtml += ">"+Preset.plz+"/"+Preset.sprit+"/"+Preset.radius+"</button>\n";
+            sHtml += "</li>\n";
+          }
+        );
+        sHtml += "</ul>\n";
+        Ele.innerHTML = sHtml;
+      }
+    }
+    
+    function pagesettingsSetPreset( Button )
+    {
+      document.getElementById( "inputplz" ).value = Button.getAttribute( "plz" );
+      document.getElementById( "inputsprit" ).value = Button.getAttribute( "sprit" );
+      document.getElementById( "inputradius" ).value = Button.getAttribute( "radius" );
+    }
+  </script>
+</head> 
+
+<body class="color-theme-teal" onload="appInit();"> 
+
+<div hidden>
+  <!-- This is the template of a timeline entry -->
+  <div id="stationstimelinetemplate" class="timeline-item">
+    <div class="timeline-item-date"><div class="station_price">-.---</div> </div>
+    <div class="timeline-item-divider timeline_divider_color"></div>
+    <div class="timeline-item-content timeline_textbox" onclick="">
+      <div class="timeline-item-subtitle station_name">Tankstelle</div>
+      <div class="timeline-item-innerl timeline_item station_addr">Strasse<br/>Plz Ort</div>
+    </div>
+  </div>
+</div>
+
+<div id="app"> 
+<div class="view view-main"> 
+<div data-name="home" class="page"> 
+  <div class="navbar"> 
+    <div class="navbar-inner" style="background-color:#E0E040"> 
+      <div class="left"> <img src="./navbaricon.svg" class="navbariconl" onclick="pageSet(0);"/> </div>
+      <div class="title" style="margin-left:0.5em;">Tanken&nbsp;</div>
+      <div class="right"> <img src="./navbariconr.svg" class="navbariconr" onclick="pageSet(1);"/> </div>
+      <!-- img src="./navbaricon.svg" id="navbariconleft" class="navbariconleft" style="margin-right:0em;" onclick="pageSet(0);"/ -->
+    </div>
+  </div>
+
+  <!-- Scrollable page content --> 
+  <div class="page-content pagebackground" id="pagepricestation" style="background-image:url('./background.jpg') !important;"> 
+    <div id="pagestationstimeline">
+      <div class="timeline" id="stationstimeline">
+      </div>
+    </div>
+  </div>  <!-- div class="page..." -->
+
+  <!-- Scrollable page content --> 
+  <div class="page-content pagebackground" id="pagesettings" style="background-image:url('./background.jpg') !important;"> 
+    <div class="block block-strong inset list">
+      <ul>
+        <li>
+          <div class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Postleitzahl der Tankabfrage</div>
+              <div class="item-input-wrap">
+                <input type="number" id="inputplz" maxlength="5" size="5" placeholder="Postleitzahl" />
+              </div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Typ des Treibstoffs/Sprit</div>
+              <div class="item-input-wrap">
+                <select id="inputsprit">
+                  <option value="diesel" selected="selected">Diesel</option>
+                  <option value="supere5">Super E5</option>
+                  <option value="supere10">Super E10</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Suchradius in km</div>
+              <div class="item-input-wrap">
+                <select id="inputradius">
+                  <option value="1">1 km</option>
+                  <option value="5" selected="selected">5 km</option>
+                  <option value="10">10 km</option>
+                  <option value="25">25 km</option>
+                  <option value="50">50 km</option>
+                  <option value="75">75 km</option>
+                  <option value="100">100 km</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <div class="block block-strong row" style="margin-top:0;margin-bottom:0;">
+        <div class="col">
+          <button class="button button-fill" onclick="pagesettingsDataUpdate();">Übernehmen</button>
+        </div>
+        <div class="col">
+          <button class="button button-fill" onclick="pageSet(0);">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="block block-strong inset list" id="pagesettingsList" style="margin-top:0;margin-bottom:0;">
+    </div>
+  </div>    <!-- div class="page..." -->
+  
+</div>  <!-- div data-name="home" class="page" --> 
+</div>  <!-- div class="view view-main" --> 
+</div>  <!-- div id="app" --> 
+
+<script src="./framework7-bundle.min.js"></script> 
+<script>
+var app = new Framework7(
+{
+  // App root element
+  el: '#app',
+  // App Name
+  name: 'My App',
+  // App id
+  id: 'com.myapp.test',
+  // Enable swipe panel
+  panel: { swipe: true, },
+  // Add default routes
+  routes: [
+    {
+      path: '/about/',
+      url: 'about.html',
+    },
+  ],
+  // ... other parameters
+} );
+var mainView = app.views.create('.view-main');
+</script>
+</body> 
+</html>

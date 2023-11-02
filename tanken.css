@@ -1,0 +1,16 @@
+:root 
+{ --usercolor: #80C0C0;
+  --usercolor-background: #00808040;
+  --usercolor-navbar: #008080C0;
+}
+
+.navbarcolor    { background-color:var(--usercolor); }
+.navbariconl    { height:1em;height:1.5em;margin-left:0.5em;cursor:pointer; }
+.navbariconr    { height:1em;height:1.5em;margin-right:0.5em;cursor:pointer; }
+.listopa        { opacity:0.8 !important; }
+.timeline_textbox { width:80vw !important; }
+.station_price  { font-weight: bold; }
+.station_name   { font-weight: bold; }
+.station_addr   { font-weight: normal;}
+.preset_item    { margin-bottom:0.5em; }
+.pagebackground { background-position:center; background-repeat:no-repeat; background-size:cover; padding-top:4em !important; }
