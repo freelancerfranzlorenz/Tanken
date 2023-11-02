@@ -5,15 +5,32 @@
   <meta charset="utf-8"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#00808020"> 
+  <meta name="theme-color" content="#EEEE4020"> 
   <title>Tank-App</title> 
   <link rel="icon" type="image/x-icon" href="./favicon.ico">
   <link rel="stylesheet" href="./framework7-bundle.min.css">
   <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./tanken.css">
-  <script src="ServerQuery.js"></script>
-  <script>
+  <script src="./ServerQuery.js"></script>
 
+  <!-- SERVICE WORKER needed for installable pwa -->
+  <script>
+  if( 'serviceWorker' in navigator ) 
+  { window.addEventListener('load', function() 
+    {
+      navigator.serviceWorker.register( './serviceworker.js' ).then( function(registration)
+      { // Registration was successful
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, 
+      function(err) 
+      { // registration failed :(
+        console.log('ServiceWorker registration failed: ', err);
+      });
+    } );
+  }
+  </script>
+  <!-- -->
+  <script>
     /* global application data */
     var gAppData = { "plz":"", "sprit":"", "radius":"", "ok":false };
     var gAppPresets = [];
@@ -233,7 +250,7 @@
   </div>
 
   <!-- Scrollable page content --> 
-  <div class="page-content pagebackground" id="pagepricestation" style="background-image:url('./background.jpg') !important;"> 
+  <div class="page-content pagebackground" id="pagepricestation"> 
     <div id="pagestationstimeline">
       <div class="timeline" id="stationstimeline">
       </div>
@@ -241,7 +258,7 @@
   </div>  <!-- div class="page..." -->
 
   <!-- Scrollable page content --> 
-  <div class="page-content pagebackground" id="pagesettings" style="background-image:url('./background.jpg') !important;"> 
+  <div class="page-content pagebackground" id="pagesettings"> 
     <div class="block block-strong inset list">
       <ul>
         <li>
