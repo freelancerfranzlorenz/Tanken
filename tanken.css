@@ -3,7 +3,6 @@
   --usercolor-background: #00808040;
   --usercolor-navbar: #008080C0;
 }
-
 .navbarcolor    { background-color:var(--usercolor); }
 .navbariconl    { height:1.5em;width:1.5em;margin-left:0.5em;cursor:pointer; }
 .navbariconr    { height:1.5em;width:1.5em;margin-right:0.5em;cursor:pointer; }

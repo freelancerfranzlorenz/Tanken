@@ -1,11 +1,9 @@
 <!DOCTYPE html> 
 <html lang="de">
 <head> 
-  <!-- Required meta tags--> 
   <meta charset="utf-8"> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#EEEE4020"> 
   <meta name="Tanken" content="Eine kleine App als Ersatz für Clever-Tanken.">
   <title>Tank-App</title> 
   <link rel="icon" type="image/x-icon" href="./favicon.ico">
@@ -18,8 +16,7 @@
   <script>
   if( 'serviceWorker' in navigator ) 
   { window.addEventListener('load', function() 
-    {
-      navigator.serviceWorker.register( './serviceworker.js' ).then( function(registration)
+    { navigator.serviceWorker.register( './serviceworker.js' ).then( function(registration)
       { // Registration was successful
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
       }, 
